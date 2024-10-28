@@ -1,7 +1,9 @@
-import { ApiError, IS_PRODUCTION, IS_TEST, logger } from "@/config";
 import { NextFunction } from "express";
+import ApiError from "@/config/apiError";
 import httpStatus from "http-status";
 import mongoose from "mongoose";
+import { IS_PRODUCTION, IS_TEST } from "@/config";
+import { logger } from "@/config/logger";
 
 /**
  *

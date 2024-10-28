@@ -1,6 +1,6 @@
 import morgan from "morgan";
 import { IS_PRODUCTION } from "@/config";
-import { logger } from "@/config";
+import { logger } from "./logger";
 
 // morgan.token('message', (req, res) => res.locals.errorMessage || '');
 
