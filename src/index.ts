@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import app from "./app";
 import { APP_PORT, DB, DB_URI, IS_PRODUCTION, IS_TEST } from "@/config";
-import {logger} from "@/config";
+import { logger } from "./config/logger";
 
 let dbURI: string;
 if (DB.HOST && DB.NAME && DB.PASSWORD && DB.USER) {
@@ -11,11 +11,6 @@ if (DB.HOST && DB.NAME && DB.PASSWORD && DB.USER) {
 } else {
   dbURI = DB_URI;
 }
-
-if (IS_TEST) {
-  dbURI += "-test";
-}
-
 const options = {
   useNewUrlParser: true,
   //useCreateIndex: true,

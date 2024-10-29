@@ -24,12 +24,8 @@ export const POSTMARK_MAIL_URL = process.env.POSTMARK_MAIL_URL
 export const POSTMARK_MAIL_TOKEN = process.env.POSTMARK_MAIL_TOKEN
 export const SENDGRID_FROM = process.env.SENDGRID_FROM
 
-export const POSTMARK_MAIL_FROM = process.env.POSTMARK_MAIL_FROM
 
-
-export const MONNIFY_URL = process.env.MONNIFY_URL
-export const MONNIFY_API_KEY = process.env.MONNIFY_API_KEY
-export const MONNIFY_SECRET_KEY = process.env.MONNIFY_SECRET_KEY
+export const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:4040"
 
 
 // encryption details
