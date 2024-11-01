@@ -2,6 +2,7 @@ import { CLIENT_URL, ENVIRONMENT } from "@/config";
 import ApiError from "@/config/apiError";
 import IUserModel, { User } from "@/model/user.model";
 import TokenGenerator from "@/util/token-generator";
+import BaseUserManagementServiceClass from "@/util/User/base-user-class";
 import httpStatus from "http-status";
 
 export class UserController {
@@ -15,26 +16,9 @@ export class UserController {
   //register as a user
   createUser = async (req: any, res: any, next: any) => {
     try {
-      const { password, email } = req.body;
-      if (!password || !email || password.length < 8)
-        throw new ApiError(
-          httpStatus.BAD_REQUEST,
-          !password || password.length < 8
-            ? "Password must be 8 character or more"
-            : "Email is required"
-        );
-
-      if (await User.findOne({ email }))
-        throw new ApiError(httpStatus.BAD_REQUEST, "Email already exist");
-
-      const user: IUserModel = new User({
-        ...req.body,
-        email: req.body.email.toLowerCase(),
-      });
-
-      user.setPassword(password);
+      const user: IUserModel =
+        await new BaseUserManagementServiceClass().createUser(req.body);
       user.setVerificationCode(4);
-      await user.save();
       user.sendVerificationEmail();
       res.status(httpStatus.OK).json({
         code: httpStatus.OK,
@@ -119,17 +103,88 @@ export class UserController {
   updatePassword = async (req: any, res: any, next: any) => {
     try {
       const { token, newPassword } = req.body;
-      if(!token || !newPassword) throw new ApiError(httpStatus.BAD_REQUEST, !token ? 'Token is required' : "New password is required")
+      if (!token || !newPassword)
+        throw new ApiError(
+          httpStatus.BAD_REQUEST,
+          !token ? "Token is required" : "New password is required"
+        );
       const { email, expiresIn } = await new TokenGenerator().decrypt(token);
       if (new Date(expiresIn!).getTime() < new Date().getTime()) {
-        throw new ApiError(httpStatus.BAD_REQUEST,'Token expired')
+        throw new ApiError(httpStatus.BAD_REQUEST, "Token expired");
       }
       const user: IUserModel = await User.findOne({ email });
       if (!user) throw new ApiError(httpStatus.BAD_REQUEST, "Email not found");
-      await user.setPassword(newPassword)
-      await user.save()
+      await user.setPassword(newPassword);
+      await user.save();
       res.status(httpStatus.OK).json({
         code: httpStatus.OK,
+        message: "success",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  //get user profile
+  getProfile = async (req: any, res: any, next: any) => {
+    try {
+      res.status(httpStatus.OK).json({
+        status: httpStatus.OK,
+        message: "success",
+        data: await User.findById(req.user._id),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  //update profile
+  updateProfile = async (req: any, res: any, next: any) => {
+    try {
+      if (req.body.password)
+        throw new ApiError(
+          httpStatus.BAD_REQUEST,
+          "Updating password is not allowed here"
+        );
+
+      if (await User.findOne({ email: req.body.email }))
+        throw new ApiError(httpStatus.BAD_REQUEST, "Email already exist");
+      res.status(httpStatus.OK).json({
+        status: httpStatus.OK,
+        message: "success",
+        data: await User.findByIdAndUpdate(req.user._id, ...req.body),
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  //update profile
+  updateInAppPassword = async (req: any, res: any, next: any) => {
+    try {
+      const { password } = req.body;
+      const user = await User.findById(req.user._id);
+      user.setPassword(password);
+      await user.save;
+      res.status(httpStatus.OK).json({
+        status: httpStatus.OK,
+        message: "success",
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  //request account deletion
+  requestAccountDeletion = async (req: any, res: any, next: any) => {
+    try {
+      const user = await User.findById(req.user._id);
+      user.delete_request = true;
+      await user.save();
+      const { email } = await User.findOne({ role: "admin" });
+      user.sendAccountDeleteRequest(email);
+      res.status(httpStatus.OK).json({
+        status: httpStatus.OK,
         message: "success",
       });
     } catch (error) {
