@@ -21,6 +21,7 @@ export interface IUser {
   status: string;
   is_deleted: boolean;
   delete_request: boolean;
+  //_id?: Schema.Types.ObjectId;
 }
 
 export interface IUserToAuthJSON {
@@ -37,6 +38,7 @@ export interface IUserToAuthJSON {
   job_title: string;
   status: string;
   delete_request: boolean;
+  //_id?: Schema.Types.ObjectId;
 }
 
 export default interface IUserModel extends Document, IUser {
@@ -51,13 +53,13 @@ export default interface IUserModel extends Document, IUser {
   sendAccountDeleteRequest(email: string): void;
   sendAccountApprovalRequest(): void;
   sendAccountRejectionRequest(): void;
-  sendWelcomeEmail(email: string, pasword: string, name: string):void
+  sendWelcomeEmail(email: string, pasword: string, name: string): void;
 }
 
 const schema = new Schema<IUserModel>(
   {
     name: { type: String, default: null, required: true },
-    email: { type: String, default: null, required: true},
+    email: { type: String, default: null, required: true },
     email_verification_code: { type: String, default: null },
     password_hash: { type: String, default: null },
     role: { type: String, default: null },
@@ -736,7 +738,7 @@ schema.methods.sendAccountDeleteRequest = async function (email: string) {
   await sendMail(email, "Delete Request", body);
 };
 schema.methods.sendAccountApprovalRequest = async function () {
-    const body = `
+  const body = `
       <!DOCTYPE html>
       <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
         <head>
@@ -929,11 +931,11 @@ schema.methods.sendAccountApprovalRequest = async function () {
         </body>
       </html>
       `;
-  
-    await sendMail(this.email, "Request Approval", body);
+
+  await sendMail(this.email, "Request Approval", body);
 };
-schema.methods.sendAccountRejectionlRequest = async function () {
-    const body = `
+schema.methods.sendAccountRejectionRequest = async function () {
+  const body = `
       <!DOCTYPE html>
       <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
         <head>
@@ -1126,10 +1128,14 @@ schema.methods.sendAccountRejectionlRequest = async function () {
         </body>
       </html>
       `;
-  
-    await sendMail(this.email, "Request Rejected", body);
+
+  await sendMail(this.email, "Request Rejected", body);
 };
-schema.methods.sendWelcomeEmail = async function (email: string, password: string, name: string) {
+schema.methods.sendWelcomeEmail = async function (
+  email: string,
+  password: string,
+  name: string
+) {
   const body = `
     <!DOCTYPE html>
     <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -1329,6 +1335,5 @@ schema.methods.sendWelcomeEmail = async function (email: string, password: strin
 
   await sendMail(email, "Welcome", body);
 };
-
 
 export const User = model<IUserModel>("User", schema);

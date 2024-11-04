@@ -6,9 +6,10 @@ const router = express.Router()
 
 const { approveRequest, rejectRequest, createEmployee, getRequests} = new AdminController()
 router.use(authenticated, AuthorizedMiddleware(["admin"]))
+router.post("/add-employee", createEmployee)
 router.get("/deletion-requests", getRequests)
-router.put("/admin/deletion-requests/:id/approve", getRequests)
-router.get("/deletion-requests/:id/reject", getRequests)
+router.put("/deletion-requests/:id/approve", approveRequest)
+router.put("/deletion-requests/:id/reject", rejectRequest)
 
 
 

@@ -1,6 +1,6 @@
-import { CLIENT_URL, ENVIRONMENT } from "@/config";
+import { breakPoint, CLIENT_URL, ENVIRONMENT } from "@/config";
 import ApiError from "@/config/apiError";
-import IUserModel, { User } from "@/model/user.model";
+import IUserModel, { IUser, User } from "@/model/user.model";
 import TokenGenerator from "@/util/token-generator";
 import BaseUserManagementServiceClass from "@/util/User/base-user-class";
 import httpStatus from "http-status";
@@ -20,6 +20,7 @@ export class UserController {
         await new BaseUserManagementServiceClass().createUser(req.body);
       user.setVerificationCode(4);
       user.sendVerificationEmail();
+      await user.save()
       res.status(httpStatus.OK).json({
         code: httpStatus.OK,
         message: "Enter OTP",
@@ -128,10 +129,11 @@ export class UserController {
   //get user profile
   getProfile = async (req: any, res: any, next: any) => {
     try {
+      const user: any = await User.findById(req.user._id);
       res.status(httpStatus.OK).json({
         status: httpStatus.OK,
         message: "success",
-        data: await User.findById(req.user._id),
+        data: { ...user._doc, password_hash: undefined },
       });
     } catch (error) {
       next(error);
@@ -147,25 +149,27 @@ export class UserController {
           "Updating password is not allowed here"
         );
 
-      if (await User.findOne({ email: req.body.email }))
-        throw new ApiError(httpStatus.BAD_REQUEST, "Email already exist");
-      res.status(httpStatus.OK).json({
-        status: httpStatus.OK,
-        message: "success",
-        data: await User.findByIdAndUpdate(req.user._id, ...req.body),
-      });
+      if (req.body.email) {
+        if (await User.findOne({ email: req.body.email }))
+          throw new ApiError(httpStatus.BAD_REQUEST, "Email already exist");
+      }
+      await User.findByIdAndUpdate(req.user._id, { ...req.body }),
+        res.status(httpStatus.OK).json({
+          status: httpStatus.OK,
+          message: "success",
+        });
     } catch (error) {
       next(error);
     }
   };
 
-  //update profile
+  //update in app password
   updateInAppPassword = async (req: any, res: any, next: any) => {
     try {
       const { password } = req.body;
       const user = await User.findById(req.user._id);
       user.setPassword(password);
-      await user.save;
+      await user.save();
       res.status(httpStatus.OK).json({
         status: httpStatus.OK,
         message: "success",
@@ -181,8 +185,8 @@ export class UserController {
       const user = await User.findById(req.user._id);
       user.delete_request = true;
       await user.save();
-      const { email } = await User.findOne({ role: "admin" });
-      user.sendAccountDeleteRequest(email);
+      const admin = await User.findOne({ role: "admin" });
+      user.sendAccountDeleteRequest(admin.email);
       res.status(httpStatus.OK).json({
         status: httpStatus.OK,
         message: "success",

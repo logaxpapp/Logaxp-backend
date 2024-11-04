@@ -1,7 +1,9 @@
-import { User } from "@/model/user.model";
+import ApiError from "@/config/apiError";
+import { IUser, User } from "@/model/user.model";
 import BaseUserManagementServiceClass from "@/util/User/base-user-class";
 import { NextFunction } from "express";
 import httpStatus from "http-status";
+import { Schema } from "inspector/promises";
 
 export class AdminController {
   createEmployee = async (req: any, res: any, next: NextFunction) => {
@@ -10,7 +12,7 @@ export class AdminController {
         req.body
       );
       user.sendWelcomeEmail(user.email, req.body.password, user.name);
-      res.status(httpStatus).json({
+      res.status(httpStatus.OK).json({
         status: httpStatus.OK,
         message: "success",
       });
@@ -22,10 +24,13 @@ export class AdminController {
   approveRequest = async (req: any, res: any, next: NextFunction) => {
     try {
       const { id } = req.params;
-      res.status(httpStatus).json({
+      const user = await User.findById(id)
+      if(!user) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user")
+      user.sendAccountApprovalRequest()
+      await User.findByIdAndUpdate(id, { delete_request: false , is_deleted: true})
+      res.status(httpStatus.OK).json({
         status: httpStatus.OK,
         message: "success",
-        data: await User.findByIdAndUpdate(id, { delete_request: false , is_deleted: true}),
       });
     } catch (error) {
       next(error);
@@ -35,10 +40,13 @@ export class AdminController {
   rejectRequest = async (req: any, res: any, next: NextFunction) => {
     try {
       const { id } = req.params;
-      res.status(httpStatus).json({
+      const user = await User.findById(id)
+      if(!user) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user")
+      user.sendAccountRejectionRequest()
+      await User.findByIdAndUpdate(id, { delete_request: false , is_deleted: false}),
+      res.status(httpStatus.OK).json({
         status: httpStatus.OK,
         message: "success",
-        data: await User.findByIdAndUpdate(id, { delete_request: false , is_deleted: false}),
       });
     } catch (error) {
       next(error);
@@ -47,10 +55,15 @@ export class AdminController {
 
   getRequests = async (req: any, res: any, next: NextFunction) => {
     try {
-      res.status(httpStatus).json({
+        const data: {name: string, email: string, _id: string} [] = []
+        const users: IUser[] = await User.find({ delete_request: true })
+        users.map(async(user:any)=>{
+             data.push({_id: user._id, name: user.name, email: user.email})
+        })
+      res.status(httpStatus.OK).json({
         status: httpStatus.OK,
         message: "success",
-        data: await User.find({delete_request: true}),
+        data
       });
     } catch (error) {
       next(error);
