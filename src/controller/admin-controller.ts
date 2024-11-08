@@ -24,10 +24,13 @@ export class AdminController {
   approveRequest = async (req: any, res: any, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const user = await User.findById(id)
-      if(!user) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user")
-      user.sendAccountApprovalRequest()
-      await User.findByIdAndUpdate(id, { delete_request: false , is_deleted: true})
+      const user = await User.findById(id);
+      if (!user) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user");
+      user.sendAccountApprovalRequest();
+      await User.findByIdAndUpdate(id, {
+        delete_request: false,
+        is_deleted: true,
+      });
       res.status(httpStatus.OK).json({
         status: httpStatus.OK,
         message: "success",
@@ -40,14 +43,17 @@ export class AdminController {
   rejectRequest = async (req: any, res: any, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const user = await User.findById(id)
-      if(!user) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user")
-      user.sendAccountRejectionRequest()
-      await User.findByIdAndUpdate(id, { delete_request: false , is_deleted: false}),
-      res.status(httpStatus.OK).json({
-        status: httpStatus.OK,
-        message: "success",
-      });
+      const user = await User.findById(id);
+      if (!user) throw new ApiError(httpStatus.BAD_REQUEST, "Invalid user");
+      user.sendAccountRejectionRequest();
+      await User.findByIdAndUpdate(id, {
+        delete_request: false,
+        is_deleted: false,
+      }),
+        res.status(httpStatus.OK).json({
+          status: httpStatus.OK,
+          message: "success",
+        });
     } catch (error) {
       next(error);
     }
@@ -55,18 +61,18 @@ export class AdminController {
 
   getRequests = async (req: any, res: any, next: NextFunction) => {
     try {
-        const data: {name: string, email: string, _id: string} [] = []
-        const users: IUser[] = await User.find({ delete_request: true })
-        users.map(async(user:any)=>{
-             data.push({_id: user._id, name: user.name, email: user.email})
-        })
+      const data: { name: string; email: string; _id: string }[] = [];
+      const users: IUser[] = await User.find({ delete_request: true });
+      users.map(async (user: any) => {
+        data.push({ _id: user._id, name: user.name, email: user.email });
+      });
       res.status(httpStatus.OK).json({
         status: httpStatus.OK,
         message: "success",
-        data
+        data,
       });
     } catch (error) {
       next(error);
     }
-  }; 
+  };
 }
